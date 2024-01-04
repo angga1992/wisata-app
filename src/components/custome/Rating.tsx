@@ -1,4 +1,3 @@
-// components/StarRating.tsx
 import React from 'react';
 
 interface StarRatingProps {
@@ -7,7 +6,6 @@ interface StarRatingProps {
 
 const StarRating: React.FC<StarRatingProps> = ({ rating }) => {
   const handleStarClick = (selectedRating: number) => {
-    // You can perform any actions on star click if needed
     console.log(`Selected Rating: ${selectedRating}`);
   };
 

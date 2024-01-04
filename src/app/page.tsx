@@ -21,7 +21,6 @@ import {
 
 import id from 'date-fns/locale/id';
 
-
 registerLocale('id', id);
 
 interface DateRangePickerProps {
@@ -33,6 +32,7 @@ const Home: React.FC = () => {
   const [idAvailable, setIdAvailable] = useState<string>('');
   const [placeName, setPlaceName] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingSearch, setLoadingSearch] = useState<boolean>(true);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
   const [roomCount, setRoomCount] = useState<number>(1);
@@ -45,7 +45,13 @@ const Home: React.FC = () => {
 
   let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
+  const replaceSpacesWithCommas = (input: string) => {
+    return input.replace(/ /g, ',');
+  };
+
+
   const handleSearch = async () => {
+    setLoadingSearch(true)
     setSearchResults([]);
     try {
       setLoading(true);
@@ -59,13 +65,16 @@ const Home: React.FC = () => {
         const response = await axios.get(`https://exterior-technical-test-api.vercel.app/property/fts?query=${foundPlaceName}`);
         const data = response.data;
         setSearchResults(data);
+        setLoadingSearch(false)
       } else {
-        const response = await axios.get(`https://exterior-technical-test-api.vercel.app/location/fts?query=${searchQuery}`);
+        const response = await axios.get(`https://exterior-technical-test-api.vercel.app/location/fts?query=${replaceSpacesWithCommas(searchQuery)}`);
         const data = response.data;
         setSearchResults(data);
+        setLoadingSearch(false)
       }
     } catch (error) {
       console.error('Error searching:', error);
+      setLoadingSearch(false)
     } finally {
       setLoading(false);
     }
@@ -77,19 +86,10 @@ const Home: React.FC = () => {
     }
   };
 
-  const debouncedHandleSearch = debounce(handleSearchClick, 2000);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     setSearchQuery(inputValue);
-
-    if (searchTimer) {
-      clearTimeout(searchTimer);
-    }
-    debouncedHandleSearch();
   };
-
-
-
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -138,9 +138,17 @@ const Home: React.FC = () => {
     setSearchResults([])
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch();
+    }
+  };
+
+
   const searchAvaible = async () => {
     try {
-      const response = await axios.get(`https://exterior-technical-test-api.vercel.app/property/availability/${idAvailable}?checkin=${startDate}&checkout=${endDate}&number_of_room=1&guest_per_room=2`);
+      const response = await axios.get(`https://exterior-technical-test-api.vercel.app/property/availability/${idAvailable}?checkin=${startDate}&checkout=${endDate}&number_of_room=${roomCount}&guest_per_room=${adultCount}`);
       const data = response.data;
     } catch (error) {
       console.error('Error searching:', error);
@@ -161,7 +169,7 @@ const Home: React.FC = () => {
       </Head>
 
       <div className="flex flex-col items-center justify-center h-full">
-        <Card className="p-3 rounded-lg my-2 w-1/2 p-5">
+        <Card className="p-3 bg-white rounded-lg my-2 w-1/2 p-5">
           <h1 className="text-3xl text-black font-semibold mb-4">The best place to book hotel deals</h1>
           <CardContent>
             <InputSuffix
@@ -170,6 +178,8 @@ const Home: React.FC = () => {
               className="text-gray text-xl w-full h-[70px]"
               value={searchQuery}
               onChange={handleInputChange}
+              onBlur={handleSearchClick}
+              onKeyUp={handleKeyPress}
             >
               {loading ? (
                 <div role="status">
@@ -184,7 +194,7 @@ const Home: React.FC = () => {
         </Card>
 
         {searchResults.length > 0 && (
-          <Card className="p-2 w-1/2 rounded-xl absolute top-[52%]">
+          <Card className="p-2 w-1/2 bg-white rounded-xl absolute top-[52%]">
             <CardContent>
               <ul>
                 {searchResults.map((result, index) => (
@@ -206,11 +216,9 @@ const Home: React.FC = () => {
               <div className='w-full'>
                 <Popover>
                   <PopoverTrigger className='flex w-full'>
-                    {/* <Button variant={`outline`} className='w-full bg-white'> */}
                     <div className='h-10 px-4 py-2 flex w-full border border-primary text-primary bg-white rounded-md hover:bg-slate-100 hover:text-primary-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50'>
-                      {`Room ${roomCount}, Adult ${adultCount}, Children ${childrenCount}`}
+                      {`Room ${roomCount}, Guest ${adultCount}`}
                     </div>
-                    {/* </Button> */}
                   </PopoverTrigger>
 
                   <PopoverContent>
@@ -219,12 +227,8 @@ const Home: React.FC = () => {
                       <IncrementDecrement initialValue={roomCount} onCountChange={count => setRoomCount(count)} />
                     </div>
                     <div className='flex w-full justify-between items-center my-2'>
-                      <div className='text-primary text-md font-bold'>Adult</div>
+                      <div className='text-primary text-md font-bold'>Guest Room</div>
                       <IncrementDecrement initialValue={adultCount} onCountChange={count => setAdultCount(count)} />
-                    </div>
-                    <div className='flex w-full justify-between items-center my-2'>
-                      <div className='text-primary text-md font-bold'>Children</div>
-                      <IncrementDecrement initialValue={childrenCount} onCountChange={count => setChildrenCount(count)} />
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -232,11 +236,11 @@ const Home: React.FC = () => {
 
             </div>
             <div className='flex w-full justify-center mt-10'>
-              <Button disabled={loading || searchQuery === ''} className='w-full h-20 text-xl'>
-                <Link href={`/search?id=${idAvailable}&start=${startDate}&end=${endDate}`} className="w-full link">
+              <Link href={`/search?id=${idAvailable}&start=${startDate}&end=${endDate}&number_of_room=${roomCount}&guest_per_room=${adultCount}`} className='w-full'>
+                <Button disabled={loadingSearch} className='w-full h-20 text-xl'>
                   Search
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

@@ -5,7 +5,7 @@ export default function Layout({
   }) {
 
     return (
-      <div className="flex w-full bg-gray-200 h-screen py-10">
+      <div className="flex w-full bg-white h-full py-10 px-10">
         {children}
       </div>
     )

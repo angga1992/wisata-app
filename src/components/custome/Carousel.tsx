@@ -8,6 +8,7 @@ interface CarouselProps {
 }
 
 const Carousel: React.FC<CarouselProps> = ({ data }) => {
+  console.log('sss',data)
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const nextSlide = () => {
@@ -26,7 +27,7 @@ const Carousel: React.FC<CarouselProps> = ({ data }) => {
             key={index}
             className={`carousel-slide ${index === currentSlide ? 'active' : ''}`}
           >
-            <img src={item.size_sm} alt={item.caption} className="w-full h-auto" />
+            <img src={item.size_sm} alt={item.caption} className="w-40 h-auto" />
             <div className="caption">{item.caption}</div>
           </div>
         ))}

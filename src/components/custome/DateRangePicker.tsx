@@ -40,18 +40,14 @@ export default function DatePickerWithRange({
 
       const updatedFromDate = formattedFromDate ? new Date(formattedFromDate) : undefined;
       const updatedToDate = formattedToDate ? new Date(formattedToDate) : undefined;
-      
+
       newDate.from = updatedFromDate;
       newDate.to = updatedToDate;
       setDate(newDate);
-      
+
       onChangeDate(newDate);
     }
   };
-  
-
-
-
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -84,7 +80,7 @@ export default function DatePickerWithRange({
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={date?.from}
+            defaultMonth={date?.from || new Date()}
             selected={date}
             onSelect={handleDateChange}
             numberOfMonths={2}
